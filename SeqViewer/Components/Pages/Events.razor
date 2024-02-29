@@ -1,0 +1,126 @@
+﻿@page "/"
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Seq.Api
+@using Seq.Api.Model.Events
+@using System.Globalization
+@using SeqViewer.Components.Layout
+@using SeqViewer.Data.ApiProviders.SeqProvider
+@using SeqViewer.Models.Shared
+@using System.Diagnostics
+
+@inject ISeqProvider _seqProvider
+
+<div class="card-wrapper">
+    <div class="query-wrapper">
+        <div class="query-info">
+            <FluentLabel Typo="Typography.H6"> Search query </FluentLabel>
+        </div>
+        <div class="query-body">
+            <FluentTextField Placeholder="SQL query" style="width: 100%;" />
+            <FluentButton IconEnd="@(new Icons.Filled.Size16.Play().WithColor("green"))"
+                          Title="Globe"
+                          Color="Color.Error"
+                          OnClick="@(() => Debug.WriteLine("Button clicked"))" />
+        </div>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </div>
+
+    @if(events != null && events.Count() > 0)
+    {
+        @foreach (var ev in events)
+        {
+            <div class="card" @onclick="@(() => ChangeDetailsVisibility(ev.Id))">
+                <div class="card-body">
+                    <div class="card-badge">
+                        <Status Value="@ev.Level" />
+                    </div>
+                    <div class="card-content-body">
+                        <div class="card-main-text"> @ev.MessageTemplateTokens.First().Text </div>
+                        <div class="card-content">@GetShortDate(ev.Timestamp)</div>
+                    </div>
+                </div>
+                <div class="card-details">
+                    @if (details.Id == ev.Id && details.ShowDetails)
+                    {
+                        <div class="card-details-wrapper">
+                            <FluentLabel Typo="Typography.H5">General</FluentLabel>
+                            <div class="details">
+                                <div class="details-row">
+                                    <div class="cell-title">Start:</div>
+                                    <div class="cell-value">@GetShortDate(ev.Start)</div>
+                                </div>
+                                <div class="details-row">
+                                    <div class="cell-title">Elapsed:</div>
+                                    <div class="cell-value">@ev.Elapsed</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-details-wrapper">
+                            <FluentLabel Typo="Typography.H5">Properties</FluentLabel>
+                            <div class="details">
+                                @foreach (var property in ev.Properties)
+                                {
+                                    <div class="details-row">
+                                        <div class="cell-title">@property.Name:</div>
+                                        <div class="cell-value">@property.Value</div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="card-details-wrapper">
+                            <FluentLabel Typo="Typography.H5">Exception</FluentLabel>
+                            <div class="details">
+                                <div class="details-row">
+                                    <div class="cell-title">RenderedMessage:</div>
+                                    <div class="cell-value">@ev.RenderedMessage</div>
+                                </div>
+                                <div class="details-row">
+                                    <div class="cell-title">Exception:</div>
+                                    <div class="cell-value">@ev.Exception</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private IQueryable<EventEntity>? events;
+    private DetailsState details = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        events = await _seqProvider.GetSeqsAsync();
+    }
+
+    private string GetShortDate(string date)
+    {
+        try
+        {
+            return DateTime.Parse(date).ToShortDateString();
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    public void ChangeDetailsVisibility(string id)
+    {
+        if (id == details.Id && details.ShowDetails != false)
+        {
+            details.ShowDetails = false;
+        }
+        else
+        {
+            details.ShowDetails = true;
+        }
+
+        details.Id = id;
+    }
+}

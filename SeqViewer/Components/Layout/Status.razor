@@ -1,0 +1,29 @@
+﻿<div class="wrapper">
+    <div class="@status indicator" />
+</div>
+
+@code {
+    private string status = "events";
+
+    [Parameter]
+    public string Value { get; set; } = "Unknow";
+
+    protected override void OnInitialized()
+    {
+        switch (Value)
+        {
+            case "OK":
+                status = "ok";
+                break;
+            case "Error":
+                status = "error";
+                break;
+            case "Warning":
+                status = "warning";
+                break;
+            default:
+                status = "unknow";
+                break;
+        }
+    }
+}

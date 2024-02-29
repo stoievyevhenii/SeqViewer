@@ -1,0 +1,18 @@
+.main{
+    display: flex;
+    flex-direction: column;
+}
+
+.header{
+    flex: 0 0 auto;
+    position: sticky;
+    top : 0;
+    z-index:999;
+}
+
+.body {
+    width: 100%;
+    height: calc(100vh - 50px);
+    overflow-y: scroll;
+    background-color: #ebebeb;
+}
