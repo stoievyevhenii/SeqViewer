@@ -16,86 +16,113 @@
             <FluentLabel Typo="Typography.H6"> Search query </FluentLabel>
         </div>
         <div class="query-body">
-            <FluentTextField Placeholder="SQL query" style="width: 100%;" />
+            <FluentTextField Placeholder="SQL query" style="width: 100%;" @onchange=@((e) => queryString = e.Value.ToString()) />
             <FluentButton IconEnd="@(new Icons.Filled.Size16.Play().WithColor("green"))"
                           Title="Globe"
                           Color="Color.Error"
-                          OnClick="@(() => Debug.WriteLine("Button clicked"))" />
+                          OnClick="@(() => GetEventsWithFilterAsync())" />
         </div>
         <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
     </div>
 
-    @if(events != null && events.Count() > 0)
+    @if (isLoading)
     {
-        @foreach (var ev in events)
+        <FluentProgressRing/>
+    }
+    else
+    {
+        if (events != null && events.Count() > 0)
         {
-            <div class="card" @onclick="@(() => ChangeDetailsVisibility(ev.Id))">
-                <div class="card-body">
-                    <div class="card-badge">
-                        <Status Value="@ev.Level" />
-                    </div>
-                    <div class="card-content-body">
-                        <div class="card-main-text"> @ev.MessageTemplateTokens.First().Text </div>
-                        <div class="card-content">@GetShortDate(ev.Timestamp)</div>
-                    </div>
-                </div>
-                <div class="card-details">
-                    @if (details.Id == ev.Id && details.ShowDetails)
-                    {
-                        <div class="card-details-wrapper">
-                            <FluentLabel Typo="Typography.H5">General</FluentLabel>
-                            <div class="details">
-                                <div class="details-row">
-                                    <div class="cell-title">Start:</div>
-                                    <div class="cell-value">@GetShortDate(ev.Start)</div>
-                                </div>
-                                <div class="details-row">
-                                    <div class="cell-title">Elapsed:</div>
-                                    <div class="cell-value">@ev.Elapsed</div>
-                                </div>
-                            </div>
+            foreach (var ev in events)
+            {
+                <div class="@DetectBackgroundById(ev.Id, ev.Level) card" @onclick="@(() => ChangeDetailsVisibility(ev.Id))">
+                    <div class="card-body">
+                        <div class="card-badge">
+                            <Status Value="@ev.Level" />
                         </div>
-
-                        <div class="card-details-wrapper">
-                            <FluentLabel Typo="Typography.H5">Properties</FluentLabel>
-                            <div class="details">
-                                @foreach (var property in ev.Properties)
-                                {
+                        <div class="card-content-body">
+                            <div class="card-main-text">@ev.MessageTemplateTokens.First().Text</div>
+                            <div class="card-content">@GetShortDate(ev.Timestamp)</div>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        @if (details.Id == ev.Id && details.ShowDetails)
+                        {
+                            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+                            <div class="card-details-wrapper">
+                                <FluentLabel Typo="Typography.H5">General</FluentLabel>
+                                <div class="details">
                                     <div class="details-row">
-                                        <div class="cell-title">@property.Name:</div>
-                                        <div class="cell-value">@property.Value</div>
+                                        <div class="cell-title">Start:</div>
+                                        <div class="cell-value">@GetShortDate(ev.Start)</div>
                                     </div>
-                                }
+                                    <div class="details-row">
+                                        <div class="cell-title">Elapsed:</div>
+                                        <div class="cell-value">@ev.Elapsed</div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="card-details-wrapper">
-                            <FluentLabel Typo="Typography.H5">Exception</FluentLabel>
-                            <div class="details">
-                                <div class="details-row">
-                                    <div class="cell-title">RenderedMessage:</div>
-                                    <div class="cell-value">@ev.RenderedMessage</div>
-                                </div>
-                                <div class="details-row">
-                                    <div class="cell-title">Exception:</div>
-                                    <div class="cell-value">@ev.Exception</div>
+                            <div class="card-details-wrapper">
+                                <FluentLabel Typo="Typography.H5">Properties</FluentLabel>
+                                <div class="details">
+                                    @foreach (var property in ev.Properties)
+                                    {
+                                        <div class="details-row">
+                                            <div class="cell-title">@property.Name:</div>
+                                            <div class="cell-value">@property.Value</div>
+                                        </div>
+                                    }
                                 </div>
                             </div>
-                        </div>
-                    }
+
+                            <div class="card-details-wrapper">
+                                <FluentLabel Typo="Typography.H5">Exception</FluentLabel>
+                                <div class="details">
+                                    <div class="details-row">
+                                        <div class="cell-title">RenderedMessage:</div>
+                                        <div class="cell-value">@ev.RenderedMessage</div>
+                                    </div>
+                                    <div class="details-row">
+                                        <div class="cell-title">Exception:</div>
+                                        <div class="cell-value">@ev.Exception</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
-            </div>
+            }
         }
     }
+
+    
 </div>
 
 @code {
     private IQueryable<EventEntity>? events;
     private DetailsState details = new();
+    private string queryString = string.Empty;
+    private bool isLoading = false;
+    private string eventBackgroundColor = "";
 
     protected override async Task OnInitializedAsync()
     {
         events = await _seqProvider.GetSeqsAsync();
+    }
+
+    public async void GetEventsWithFilterAsync()
+    {
+        isLoading = true;
+
+        var filteredData = await _seqProvider.GetSeqsWithFilterAsync(queryString);
+        if (filteredData != null)
+        {
+            events = filteredData;
+        }
+
+        isLoading = false;
+        StateHasChanged();
     }
 
     private string GetShortDate(string date)
@@ -115,6 +142,7 @@
         if (id == details.Id && details.ShowDetails != false)
         {
             details.ShowDetails = false;
+            eventBackgroundColor = "";
         }
         else
         {
@@ -122,5 +150,27 @@
         }
 
         details.Id = id;
+    }
+
+    public string DetectBackgroundById(string id, string level)
+    {
+        if (id == details.Id && details.ShowDetails != false)
+        {
+            switch (level)
+            {
+                case "Error":
+                    return "error-background";
+                case "Warning":
+                    return "warning-background";
+                case "OK":
+                    return "default-background";
+                default:
+                    return "";
+            }
+        }
+        else
+        {
+            return "";
+        }
     }
 }
