@@ -17,6 +17,7 @@
         </div>
         <div class="query-body">
             <FluentTextField Placeholder="SQL query" style="width: 100%;" @onchange=@((e) => queryString = e.Value.ToString()) />
+            <FluentNumberField @bind-Value="logCount" Placeholder="Count" />
             <FluentButton IconEnd="@(new Icons.Filled.Size16.Play().WithColor("green"))"
                           Title="Globe"
                           Color="Color.Error"
@@ -48,7 +49,6 @@
                     <div class="card-details">
                         @if (details.Id == ev.Id && details.ShowDetails)
                         {
-                            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
                             <div class="card-details-wrapper">
                                 <FluentLabel Typo="Typography.H5">General</FluentLabel>
                                 <div class="details">
@@ -103,19 +103,21 @@
     private IQueryable<EventEntity>? events;
     private DetailsState details = new();
     private string queryString = string.Empty;
-    private bool isLoading = false;
+    private bool isLoading = true;
     private string eventBackgroundColor = "";
+    private int logCount { get; set; } = 30;
 
     protected override async Task OnInitializedAsync()
     {
         events = await _seqProvider.GetSeqsAsync();
+        isLoading = false;
     }
 
     public async void GetEventsWithFilterAsync()
     {
         isLoading = true;
 
-        var filteredData = await _seqProvider.GetSeqsWithFilterAsync(queryString);
+        var filteredData = await _seqProvider.GetSeqsWithFilterAsync(queryString, logCount);
         if (filteredData != null)
         {
             events = filteredData;

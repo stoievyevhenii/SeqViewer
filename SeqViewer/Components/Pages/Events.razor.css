@@ -19,10 +19,6 @@
     box-shadow: var(--elevation-shadow-card-rest);
 }
 
-    .card:hover {
-        border-color: var(--accent-fill-rest);
-    }
-
 .card-wrapper {
     display: flex;
     flex-direction: column;

@@ -6,6 +6,6 @@ namespace SeqViewer.Data.ApiProviders.SeqProvider
     {
         public Task<IQueryable<EventEntity>> GetSeqsAsync();
 
-        public Task<IQueryable<EventEntity>> GetSeqsWithFilterAsync(string filterString);
+        public Task<IQueryable<EventEntity>> GetSeqsWithFilterAsync(string filterString, int count);
     }
 }

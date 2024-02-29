@@ -26,11 +26,11 @@ namespace SeqViewer.Data.ApiProviders.SeqProvider
             }
         }
 
-        public async Task<IQueryable<EventEntity>> GetSeqsWithFilterAsync(string filterString)
+        public async Task<IQueryable<EventEntity>> GetSeqsWithFilterAsync(string filterString, int count)
         {
             try
             {
-                var resultSet = await _connection.Events.ListAsync(filter: filterString);
+                var resultSet = await _connection.Events.ListAsync(filter: filterString, count: count);
                 return resultSet.AsQueryable();
             }
             catch (Exception ex)
